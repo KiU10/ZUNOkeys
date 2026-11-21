@@ -12,7 +12,17 @@ const views = {
 
 const STORAGE_KEY = "zunokeys-data";
 
-const oldData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+// ------------------------------------
+// USER DATA
+// ------------------------------------
+
+let oldData = {};
+
+try {
+    oldData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+} catch (error) {
+    console.error("Could not load saved data:", error);
+}
 
 const userData = {
     xp: oldData.xp || 0,
@@ -92,7 +102,8 @@ function updateDashboard() {
     $("overall-accuracy").textContent = `${averageAccuracy}%`;
 
     const level = Math.floor(userData.xp / 100) + 1;
-    $("profile-level").textContent = `Level ${level} · ${getLevelName(level)}`;
+    $("profile-level").textContent =
+        `Level ${level} · ${getLevelName(level)}`;
 
     $("game-highscore").textContent = userData.highscore;
 
@@ -130,26 +141,15 @@ function createLessonCard(lesson) {
     const description = document.createElement("p");
     description.textContent = lesson.description;
 
-    const status = document.createElement("div");
-    status.className = "lesson-status";
-
-    if (completed) {
-        status.textContent = "✓ ABGESCHLOSSEN";
-    } else if (started) {
-        status.textContent = "● ANGEFANGEN";
-    }
-
     const button = document.createElement("button");
     button.className = "primary-button";
-    button.textContent = completed ? "Wiederholen →" : "Lektion starten →";
+    button.textContent = completed
+        ? "Wiederholen →"
+        : "Lektion starten →";
 
     button.addEventListener("click", () => startLesson(lesson.id));
 
-    card.append(number, title, description);
-
-    if (status.textContent) card.append(status);
-
-    card.append(button);
+    card.append(number, title, description, button);
 
     return card;
 }
@@ -178,7 +178,10 @@ function renderKeyMastery() {
     const keys = "abcdefghijklmnopqrstuvwxyzäöüß".split("");
 
     keys.forEach(key => {
-        const stats = userData.keyStats[key] || { attempts: 0, errors: 0 };
+        const stats = userData.keyStats[key] || {
+            attempts: 0,
+            errors: 0
+        };
 
         const tile = document.createElement("div");
         tile.className = "key-tile";
@@ -214,19 +217,31 @@ let trainingMode = "lesson";
 let currentWpm = 0;
 let currentAccuracy = 100;
 
+const typingInput = $("typing-input");
+
+// ------------------------------------
+// START LESSON
+// ------------------------------------
+
 function startLesson(lessonId) {
     currentLesson = getLesson(lessonId);
 
     if (!currentLesson) return;
 
     trainingMode = "lesson";
-    currentExercise = 0;
+
+    const completed = userData.completedLessons.includes(lessonId);
+    const savedProgress = Number(userData.lessonProgress[lessonId]) || 0;
+
+    currentExercise = completed
+        ? 0
+        : Math.min(savedProgress, currentLesson.exercises.length - 1);
 
     if (!userData.startedLessons.includes(lessonId)) {
         userData.startedLessons.push(lessonId);
     }
 
-    userData.lessonProgress[lessonId] = 0;
+    userData.lessonProgress[lessonId] = currentExercise;
 
     saveData();
     renderLessons();
@@ -247,6 +262,21 @@ function startLesson(lessonId) {
 // ------------------------------------
 
 function continueLearning() {
+    // Repair older saved progress where the final exercise
+    // was completed but the lesson was not marked completed.
+    lessons.forEach(lesson => {
+        const progress = Number(userData.lessonProgress[lesson.id]) || 0;
+
+        if (
+            progress >= lesson.exercises.length &&
+            !userData.completedLessons.includes(lesson.id)
+        ) {
+            userData.completedLessons.push(lesson.id);
+        }
+    });
+
+    saveData();
+
     const nextLesson = lessons.find(
         lesson => !userData.completedLessons.includes(lesson.id)
     );
@@ -277,17 +307,17 @@ function loadExercise() {
     currentWpm = 0;
     currentAccuracy = 100;
 
-    const input = $("typing-input");
-
-    input.value = "";
-    input.disabled = false;
-    input.focus();
+    typingInput.value = "";
+    typingInput.disabled = false;
+    typingInput.focus();
 
     $("exercise-number").textContent =
         `Übung ${currentExercise + 1} / ${currentLesson.exercises.length}`;
 
     $("exercise-progress-label").textContent =
-        `${Math.round(currentExercise / currentLesson.exercises.length * 100)}%`;
+        `${Math.round(
+            currentExercise / currentLesson.exercises.length * 100
+        )}%`;
 
     $("live-wpm").textContent = "0 WPM";
     $("live-accuracy").textContent = "100%";
@@ -295,6 +325,7 @@ function loadExercise() {
 
     $("next-button").disabled = true;
     $("next-button").textContent = "Weiter →";
+
     $("completion-message").textContent = "";
 
     renderTypingText("");
@@ -314,7 +345,9 @@ function renderTypingText(typedText) {
 
         if (i < typedText.length) {
             character.className =
-                typedText[i] === targetText[i] ? "correct" : "incorrect";
+                typedText[i] === targetText[i]
+                    ? "correct"
+                    : "incorrect";
         } else if (i === typedText.length) {
             character.className = "current";
         } else {
@@ -329,16 +362,8 @@ function renderTypingText(typedText) {
 // STRICT TYPING
 // ------------------------------------
 
-const typingInput = $("typing-input");
-
 typingInput.addEventListener("keydown", event => {
-    if (finished) {
-        if (event.code === "Space") {
-            event.preventDefault();
-            nextExercise();
-        }
-        return;
-    }
+    if (finished) return;
 
     // No deleting or replacing previously typed characters.
     if (
@@ -356,8 +381,10 @@ typingInput.addEventListener("keydown", event => {
     }
 
     // Block shortcuts that could paste or replace text.
-    if ((event.ctrlKey || event.metaKey) &&
-        ["v", "x", "a"].includes(event.key.toLowerCase())) {
+    if (
+        (event.ctrlKey || event.metaKey) &&
+        ["v", "x", "a"].includes(event.key.toLowerCase())
+    ) {
         event.preventDefault();
     }
 });
@@ -367,6 +394,38 @@ typingInput.addEventListener("cut", event => event.preventDefault());
 typingInput.addEventListener("drop", event => event.preventDefault());
 
 typingInput.addEventListener("input", handleTyping);
+
+// ------------------------------------
+// GLOBAL SPACEBAR
+// ------------------------------------
+
+function exitTraining() {
+    $("practice-training-panel").classList.remove("visible");
+    showView("dashboard");
+}
+
+document.addEventListener("keydown", event => {
+    if (
+        event.code !== "Space" ||
+        event.repeat ||
+        !finished ||
+        !$("practice-training-panel").classList.contains("visible")
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+
+    if ($("next-button").textContent === "Zum Dashboard →") {
+        exitTraining();
+    } else {
+        nextExercise();
+    }
+});
+
+// ------------------------------------
+// HANDLE TYPING
+// ------------------------------------
 
 function handleTyping() {
     if (finished) return;
@@ -392,30 +451,37 @@ function handleTyping() {
         startTime = Date.now();
     }
 
+    const previousLength = previousInput.length;
     previousInput = typedText;
 
     let correctCharacters = 0;
     let errors = 0;
 
+    // Calculate accuracy for the whole input.
     for (let i = 0; i < typedText.length; i++) {
-        const correct = typedText[i] === targetText[i];
-
-        if (correct) {
+        if (typedText[i] === targetText[i]) {
             correctCharacters++;
         } else {
             errors++;
         }
+    }
 
-        const key = targetText[i].toLowerCase();
+    // Count only the newly entered character in key statistics.
+    if (typedText.length > previousLength) {
+        const newIndex = typedText.length - 1;
+        const key = targetText[newIndex].toLowerCase();
 
         if (/^[a-zäöüß]$/.test(key)) {
             if (!userData.keyStats[key]) {
-                userData.keyStats[key] = { attempts: 0, errors: 0 };
+                userData.keyStats[key] = {
+                    attempts: 0,
+                    errors: 0
+                };
             }
 
             userData.keyStats[key].attempts++;
 
-            if (!correct) {
+            if (typedText[newIndex] !== targetText[newIndex]) {
                 userData.keyStats[key].errors++;
             }
         }
@@ -458,10 +524,24 @@ function completeExercise() {
     finished = true;
     typingInput.disabled = true;
 
+    const isLastExercise =
+        currentExercise === currentLesson.exercises.length - 1;
+
     $("next-button").disabled = false;
 
-    $("completion-message").textContent =
-        `✓ Übung geschafft! ${currentAccuracy}% Genauigkeit · Leertaste zum Weitermachen`;
+    if (isLastExercise) {
+        $("next-button").textContent = "Zum Dashboard →";
+
+        $("completion-message").textContent =
+            trainingMode === "lesson"
+                ? "🏆 Lektion abgeschlossen! Leertaste zum Dashboard."
+                : "🎉 Alle Übungen geschafft! Leertaste zum Dashboard.";
+    } else {
+        $("next-button").textContent = "Weiter →";
+
+        $("completion-message").textContent =
+            `✓ Übung geschafft! ${currentAccuracy}% Genauigkeit · Leertaste zum Weitermachen`;
+    }
 
     userData.xp += currentAccuracy >= 95 ? 10 : 5;
     userData.completed++;
@@ -471,9 +551,18 @@ function completeExercise() {
 
     if (trainingMode === "lesson") {
         userData.lessonProgress[currentLesson.id] = currentExercise + 1;
+
+        // Complete the lesson immediately after its final exercise.
+        if (
+            isLastExercise &&
+            !userData.completedLessons.includes(currentLesson.id)
+        ) {
+            userData.completedLessons.push(currentLesson.id);
+        }
     }
 
     saveData();
+    renderLessons();
     updateDashboard();
 }
 
@@ -482,7 +571,7 @@ function completeExercise() {
 // ------------------------------------
 
 function nextExercise() {
-    if (!finished) return;
+    if (!finished || !currentLesson) return;
 
     if (currentExercise < currentLesson.exercises.length - 1) {
         currentExercise++;
@@ -496,36 +585,7 @@ function nextExercise() {
         return;
     }
 
-    if (trainingMode === "lesson") {
-        if (!userData.completedLessons.includes(currentLesson.id)) {
-            userData.completedLessons.push(currentLesson.id);
-        }
-
-        saveData();
-        renderLessons();
-        updateDashboard();
-
-        $("completion-message").textContent =
-            "🏆 Lektion abgeschlossen! Du kannst jetzt weitermachen.";
-
-        $("next-button").textContent = "Zum Dashboard →";
-        $("next-button").disabled = false;
-
-        $("next-button").onclick = () => {
-            $("next-button").onclick = null;
-            $("practice-training-panel").classList.remove("visible");
-            showView("dashboard");
-        };
-    } else {
-        $("completion-message").textContent =
-            "🎉 Alle Übungen geschafft! Stark!";
-        $("next-button").textContent = "Zum Dashboard →";
-        $("next-button").onclick = () => {
-            $("next-button").onclick = null;
-            $("practice-training-panel").classList.remove("visible");
-            showView("dashboard");
-        };
-    }
+    exitTraining();
 }
 
 $("next-button").addEventListener("click", nextExercise);
@@ -551,6 +611,7 @@ const freeExercises = {
         "Schule Bücher Hefte Stifte",
         "Wasser Feuer Erde Luft"
     ],
+
     medium: [
         "Heute ist ein schöner Tag.",
         "Der Hund läuft durch den Garten.",
@@ -558,6 +619,7 @@ const freeExercises = {
         "Morgen gehe ich wieder zur Schule.",
         "Nach der Schule mache ich meine Hausaufgaben."
     ],
+
     hard: [
         "Übung macht den Meister, also bleib konzentriert!",
         "Könntest du mir bitte das Wörterbuch geben?",
@@ -590,6 +652,7 @@ $("start-practice-button").addEventListener("click", () => {
 
     $("practice-training-panel").classList.add("visible");
 
+    showView("practice");
     loadExercise();
 });
 
@@ -618,7 +681,9 @@ function spawnGameLetter() {
     if (!gameActive) return;
 
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
-    const letter = alphabet[Math.floor(Math.random() * alphabet.length)];
+    const letter = alphabet[
+        Math.floor(Math.random() * alphabet.length)
+    ];
 
     const element = document.createElement("div");
     element.className = "game-letter";
@@ -652,28 +717,29 @@ function startGame() {
 
     updateGameStats();
 
-    gameSpawnTimer = setInterval(
-        spawnGameLetter,
-        1100
-    );
+    gameSpawnTimer = setInterval(spawnGameLetter, 1100);
 
     gameLoopTimer = setInterval(() => {
-        gameLetters.forEach((item, index) => {
+        // Iterate backwards so removing an item does not skip the next one.
+        for (let i = gameLetters.length - 1; i >= 0; i--) {
+            const item = gameLetters[i];
+
             item.y += item.speed;
             item.element.style.top = `${item.y}px`;
 
             if (item.y > gameArena.clientHeight - 35) {
                 item.element.remove();
-                gameLetters.splice(index, 1);
+                gameLetters.splice(i, 1);
 
                 gameLives--;
                 updateGameStats();
 
                 if (gameLives <= 0) {
                     endGame();
+                    break;
                 }
             }
-        });
+        }
     }, 35);
 }
 
@@ -698,7 +764,8 @@ function endGame() {
     updateGameStats();
 
     $("game-status").textContent = "SPIEL BEENDET";
-    $("game-hint").textContent = `Du hast ${gameScore} Punkte erreicht.`;
+    $("game-hint").textContent =
+        `Du hast ${gameScore} Punkte erreicht.`;
 
     $("game-overlay-title").textContent = "Game Over!";
     $("game-overlay-text").textContent =
@@ -724,6 +791,7 @@ document.addEventListener("keydown", event => {
     if (index === -1) return;
 
     const item = gameLetters[index];
+
     item.element.remove();
     gameLetters.splice(index, 1);
 
