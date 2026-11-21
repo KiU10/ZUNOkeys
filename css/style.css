@@ -390,44 +390,6 @@ button {
     border-color: #6655a5;
 }
 
-.lesson-card.started {
-    background: rgba(57, 255, 20, 0.12);
-    border-color: rgba(57, 255, 20, 0.4);
-    box-shadow: inset 0 0 22px rgba(57, 255, 20, 0.035);
-}
-
-.lesson-card.completed {
-    border-color: rgba(57, 255, 20, 0.4);
-}
-
-.lesson-number {
-    display: inline-block;
-    background: #302b43;
-    color: #b8aaff;
-    padding: 7px 10px;
-
-
-/* LESSON CARDS */
-
-.lesson-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
-    gap: 14px;
-}
-
-.lesson-card {
-    position: relative;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 13px;
-    padding: 21px;
-    transition: 0.2s;
-}
-
-.lesson-card:hover {
-    transform: translateY(-3px);
-}
-
 .lesson-card.started,
 .lesson-card.completed {
     background: rgba(57, 255, 20, 0.4);
