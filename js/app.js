@@ -1,6 +1,47 @@
 
 import { lessons, getLesson } from "./lessons.js";
 
+// FREE PRACTICE EXERCISES
+const freeExercises = [
+    // Einfache Wörter
+    "Haus Baum Katze Hund",
+    "Sonne Mond Sterne Wolken",
+    "Apfel Banane Birne Erdbeere",
+    "Schule Bücher Hefte Stifte",
+    "Wasser Feuer Erde Luft",
+    "Freund Familie Fußball Musik",
+
+    // Kurze Sätze
+    "Heute ist ein schöner Tag.",
+    "Der Hund läuft durch den Garten.",
+    "Meine Katze schläft auf dem Sofa.",
+    "Ich spiele gerne Fußball.",
+    "Morgen gehe ich wieder zur Schule.",
+    "Draußen scheint die Sonne.",
+    "Am Abend lese ich ein Buch.",
+    "Wir treffen uns nach dem Unterricht.",
+
+    // Alltag und längere Sätze
+    "Nach der Schule mache ich zuerst meine Hausaufgaben.",
+    "Am Wochenende spiele ich mit meinen Freunden Fußball.",
+    "Meine Familie isst heute gemeinsam zu Abend.",
+    "Ich höre gerne Musik, wenn ich unterwegs bin.",
+    "Der Bus kommt heute leider ein paar Minuten zu spät.",
+    "Im Sommer fahren wir manchmal mit dem Fahrrad zum See.",
+    "Nach einem langen Tag freue ich mich auf etwas Ruhe.",
+    "Manchmal ist es besser, langsam und konzentriert zu arbeiten.",
+
+    // Etwas anspruchsvoller
+    "Übung macht den Meister, also bleib konzentriert!",
+    "Könntest du mir bitte das Wörterbuch geben?",
+    "Plötzlich begann es draußen heftig zu regnen.",
+    "Über den Dächern der Stadt ziehen dunkle Wolken vorbei.",
+    "Wenn ich ein Ziel habe, arbeite ich Schritt für Schritt darauf hin.",
+    "Man sollte nicht aufgeben, nur weil etwas am Anfang schwierig ist.",
+    "Während draußen der Wind weht, sitze ich gemütlich am Schreibtisch.",
+    "Jeder kleine Fortschritt bringt dich deinem nächsten Ziel näher."
+];
+
 // ELEMENTS
 const $ = (id) => document.getElementById(id);
 
@@ -188,7 +229,6 @@ function handleTyping() {
     const input = $("typing-input");
     let typedText = input.value;
 
-    // Do not allow typing beyond the target
     if (typedText.length > targetText.length) {
         typedText = typedText.slice(0, targetText.length);
         input.value = typedText;
@@ -258,7 +298,6 @@ function completeExercise(wpm) {
 }
 
 // NEXT EXERCISE
-
 function nextExercise() {
     if (!finished) return;
 
@@ -269,7 +308,9 @@ function nextExercise() {
         loadExercise();
     } else {
         $("completion-message").textContent =
-            "🏆 Lektion abgeschlossen! Großartige Arbeit!";
+            currentLesson.id === 0
+                ? "🎉 Du hast alle freien Übungen geschafft!"
+                : "🏆 Lektion abgeschlossen! Großartige Arbeit!";
 
         $("next-button").textContent = "Zum Dashboard →";
 
@@ -281,16 +322,13 @@ function nextExercise() {
     }
 }
 
-
 // FREE PRACTICE
 function startFreePractice() {
     currentLesson = {
         id: 0,
         title: "Freies Training",
-        description: "Übe in deinem eigenen Tempo.",
-        exercises: [
-            "the quick brown fox jumps over the lazy dog"
-        ]
+        description: "30 deutsche Übungen für deine Tippfähigkeiten.",
+        exercises: freeExercises
     };
 
     currentExercise = 0;
@@ -337,4 +375,3 @@ $("back-button").addEventListener("click", () => {
 renderLessons();
 updateDashboard();
 showView("dashboard");
-
