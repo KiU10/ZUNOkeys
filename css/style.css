@@ -184,10 +184,10 @@ button {
     margin-bottom: 23px;
 }
 
-.welcome-icon {
-    font-size: 75px;
-    opacity: 0.85;
-    padding: 0 25px;
+.welcome-icon img {
+    width: 180px;
+    height:auto;
+    object-fit: contain;
 }
 
 .primary-button {
