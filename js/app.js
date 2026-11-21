@@ -258,29 +258,29 @@ function completeExercise(wpm) {
 }
 
 // NEXT EXERCISE
+
 function nextExercise() {
     if (!finished) return;
 
     currentExercise++;
 
     if (currentExercise < currentLesson.exercises.length) {
+        $("next-button").textContent = "Weiter →";
         loadExercise();
     } else {
         $("completion-message").textContent =
             "🏆 Lektion abgeschlossen! Großartige Arbeit!";
 
         $("next-button").textContent = "Zum Dashboard →";
-        $("next-button").disabled = false;
 
         $("next-button").onclick = () => {
+            $("next-button").onclick = null;
             $("next-button").textContent = "Weiter →";
-            $("next-button").onclick = nextExercise;
             showView("dashboard");
         };
-
-        $("completion-message").classList.remove("hidden");
     }
 }
+
 
 // FREE PRACTICE
 function startFreePractice() {
