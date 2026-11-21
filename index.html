@@ -1,47 +1,388 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#29243f">
+
     <title>ZUNOkeys</title>
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <main id="app">
-        <h1>ZUNOkeys</h1>
-        <p>Dein 10-Finger-Schreibtrainer.</p>
+    <div class="app">
 
-        <section id="typing-container">
-            <div id="lesson-info">
-                <h2 id="lesson-title">Lektion 1</h2>
-                <p id="lesson-description">Die Grundreihe kennenlernen.</p>
+        <aside class="sidebar">
+            <div class="logo">ZUNO<span>keys</span></div>
+
+            <nav>
+                <button class="nav-item active" data-view="dashboard">
+                    <span>⌂</span> Dashboard
+                </button>
+
+                <button class="nav-item" data-view="lessons">
+                    <span>⌨</span> Lektionen
+                </button>
+
+                <button class="nav-item" data-view="practice">
+                    <span>✎</span> Freies Training
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="profile-icon">Z</div>
+                <div>
+                    <strong>Mein Profil</strong>
+                    <small>Level 1 · Anfänger</small>
+                </div>
             </div>
+        </aside>
 
-            <div id="text-display"></div>
+        <main class="main-content">
 
-            <textarea
-                id="typing-input"
-                placeholder="Hier anfangen zu tippen..."
-                autocomplete="off"
-                autocorrect="off"
-                spellcheck="false"
-            ></textarea>
+            <header class="topbar">
+                <div>
+                    <span class="eyebrow">DEIN TIPPTRAINER</span>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
 
-            <div id="stats">
-                <p>WPM: <span id="wpm">0</span></p>
-                <p>Genauigkeit: <span id="accuracy">100%</span></p>
-                <p>Fehler: <span id="errors">0</span></p>
+                <div class="topbar-info">
+                    <span>⭐ <strong id="xp">0</strong> XP</span>
+                    <span>🔥 0 Tage</span>
+                </div>
+            </header>
+
+            <!-- DASHBOARD -->
+            <section id="dashboard-view" class="view">
+
+                <div class="welcome-card">
+                    <div>
+                        <span class="eyebrow">WILLKOMMEN BEI ZUNOkeys</span>
+                        <h2>Bereit, schneller zu tippen?</h2>
+                        <p>Lerne das 10-Finger-System Schritt für Schritt.</p>
+                        <button class="primary-button" id="continue-button">
+                            Training starten →
+                        </button>
+                    </div>
+                    <div class="welcome-icon">⌨️</div>
+                </div>
+
+                <div class="section-heading">
+                    <h2>Dein Fortschritt</h2>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span>📚</span>
+                        <strong id="completed-count">0</strong>
+                        <small>Abgeschlossene Übungen</small>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>⚡</span>
+                        <strong id="best-wpm">0</strong>
+                        <small>Beste WPM</small>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>⭐</span>
+                        <strong id="total-xp">0</strong>
+                        <small>Gesammelte XP</small>
+                    </div>
+                </div>
+
+                <div class="section-heading">
+                    <h2>Deine Lektionen</h2>
+                    <button class="text-button" data-view="lessons">
+                        Alle anzeigen →
+                    </button>
+                </div>
+
+                <div id="dashboard-lessons" class="lesson-grid"></div>
+
+            </section>
+
+            <!-- LEKTIONEN -->
+            <section id="lessons-view" class="view hidden">
+
+                <div class="intro-text">
+                    <h2>Alle Lektionen</h2>
+                    <p>Arbeite dich Schritt für Schritt durch die Tastatur.</p>
+                </div>
+
+                <div id="all-lessons" class="lesson-grid"></div>
+
+            </section>
+
+            <!-- TRAINING -->
+            <section id="practice-view" class="view hidden">
+
+                <div class="training-header">
+                    <button class="text-button" id="back-button">
+                        ← Zurück
+                    </button>
+
+                    <span id="exercise-number">Übung 1</span>
+                </div>
+
+                <div class="training-card">
+
+                    <span class="eyebrow" id="training-label">
+                        LEKTION 1
+                    </span>
+
+                    <h2 id="training-title">Die Grundreihe</h2>
+                    <p id="training-description">
+                        Lerne die Grundreihe kennen.
+                    </p>
+
+                    <div class="typing-text" id="text-display"></div>
+
+                    <textarea
+                        id="typing-input"
+                        placeholder="Tippe hier..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        autocapitalize="off"
+                        aria-label="Hier den angezeigten Text abtippen"
+                    ></textarea>
+
+                    <div class="live-stats">
+                        <div>
+                            <strong id="wpm">0</strong>
+                            <small>WPM</small>
+                        </div>
+
+                        <div>
+                            <strong id="accuracy">100%</strong>
+                            <small>Genauigkeit</small>
+                        </div>
+
+                        <div>
+                            <strong id="errors">0</strong>
+                            <small>Fehler</small>
+                        </div>
+                    </div>
+
+                    <div class="training-actions">
+                        <button class="secondary-button" id="restart-button">
+                            ↻ Neustarten
+                        </button>
+
+                        <button class="primary-button" id="next-button" disabled>
+                            Weiter →
+                        </button>
+                    </div>
+
+                    <p id="completion-message" class="completion-message hidden">
+                        🎉 Übung abgeschlossen!
+                    </p>
+
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#29243f">
+
+    <title>ZUNOkeys</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app">
+
+        <aside class="sidebar">
+            <div class="logo">ZUNO<span>keys</span></div>
+
+            <nav>
+                <button class="nav-item active" data-view="dashboard">
+                    <span>⌂</span> Dashboard
+                </button>
+
+                <button class="nav-item" data-view="lessons">
+                    <span>⌨</span> Lektionen
+                </button>
+
+                <button class="nav-item" data-view="practice">
+                    <span>✎</span> Freies Training
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="profile-icon">Z</div>
+                <div>
+                    <strong>Mein Profil</strong>
+                    <small>Level 1 · Anfänger</small>
+                </div>
             </div>
+        </aside>
 
-            <button id="restart-button">Neu starten</button>
-        </section>
-    </main>
+        <main class="main-content">
 
-    <script src="js/lessons.js"></script>
-    <script src="js/stats.js"></script>
-    <script src="js/typing.js"></script>
-    <script src="js/app.js"></script>
+            <header class="topbar">
+                <div>
+                    <span class="eyebrow">DEIN TIPPTRAINER</span>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+
+                <div class="topbar-info">
+                    <span>⭐ <strong id="xp">0</strong> XP</span>
+                    <span>🔥 0 Tage</span>
+                </div>
+            </header>
+
+            <!-- DASHBOARD -->
+            <section id="dashboard-view" class="view">
+
+                <div class="welcome-card">
+                    <div>
+                        <span class="eyebrow">WILLKOMMEN BEI ZUNOkeys</span>
+                        <h2>Bereit, schneller zu tippen?</h2>
+                        <p>Lerne das 10-Finger-System Schritt für Schritt.</p>
+                        <button class="primary-button" id="continue-button">
+                            Training starten →
+                        </button>
+                    </div>
+                    <div class="welcome-icon">⌨️</div>
+                </div>
+
+                <div class="section-heading">
+                    <h2>Dein Fortschritt</h2>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span>📚</span>
+                        <strong id="completed-count">0</strong>
+                        <small>Abgeschlossene Übungen</small>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>⚡</span>
+                        <strong id="best-wpm">0</strong>
+                        <small>Beste WPM</small>
+                    </div>
+
+                    <div class="stat-card">
+                        <span>⭐</span>
+                        <strong id="total-xp">0</strong>
+                        <small>Gesammelte XP</small>
+                    </div>
+                </div>
+
+                <div class="section-heading">
+                    <h2>Deine Lektionen</h2>
+                    <button class="text-button" data-view="lessons">
+                        Alle anzeigen →
+                    </button>
+                </div>
+
+                <div id="dashboard-lessons" class="lesson-grid"></div>
+
+            </section>
+
+            <!-- LEKTIONEN -->
+            <section id="lessons-view" class="view hidden">
+
+                <div class="intro-text">
+                    <h2>Alle Lektionen</h2>
+                    <p>Arbeite dich Schritt für Schritt durch die Tastatur.</p>
+                </div>
+
+                <div id="all-lessons" class="lesson-grid"></div>
+
+            </section>
+
+            <!-- TRAINING -->
+            <section id="practice-view" class="view hidden">
+
+                <div class="training-header">
+                    <button class="text-button" id="back-button">
+                        ← Zurück
+                    </button>
+
+                    <span id="exercise-number">Übung 1</span>
+                </div>
+
+                <div class="training-card">
+
+                    <span class="eyebrow" id="training-label">
+                        LEKTION 1
+                    </span>
+
+                    <h2 id="training-title">Die Grundreihe</h2>
+                    <p id="training-description">
+                        Lerne die Grundreihe kennen.
+                    </p>
+
+                    <div class="typing-text" id="text-display"></div>
+
+                    <textarea
+                        id="typing-input"
+                        placeholder="Tippe hier..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        autocapitalize="off"
+                        aria-label="Hier den angezeigten Text abtippen"
+                    ></textarea>
+
+                    <div class="live-stats">
+                        <div>
+                            <strong id="wpm">0</strong>
+                            <small>WPM</small>
+                        </div>
+
+                        <div>
+                            <strong id="accuracy">100%</strong>
+                            <small>Genauigkeit</small>
+                        </div>
+
+                        <div>
+                            <strong id="errors">0</strong>
+                            <small>Fehler</small>
+                        </div>
+                    </div>
+
+                    <div class="training-actions">
+                        <button class="secondary-button" id="restart-button">
+                            ↻ Neustarten
+                        </button>
+
+                        <button class="primary-button" id="next-button" disabled>
+                            Weiter →
+                        </button>
+                    </div>
+
+                    <p id="completion-message" class="completion-message hidden">
+                        🎉 Übung abgeschlossen!
+                    </p>
+
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
 
 </body>
 </html>
