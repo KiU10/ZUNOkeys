@@ -1,4 +1,3 @@
-#ZUNOkeys
 ⌨️ ZUNOkeys
 
 ZUNOkeys is a browser-based touch-typing learning platform inspired by TypingClub and EdClub.
