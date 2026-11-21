@@ -1,5 +1,6 @@
 
 import { lessons, getLesson } from "./lessons.js";
+import { PASS_REWARDS, getPassLevel } from "./pass.js";
 
 const $ = id => document.getElementById(id);
 
@@ -35,7 +36,8 @@ const userData = {
     lessonProgress: oldData.lessonProgress || {},
     keyStats: oldData.keyStats || {},
     highscore: oldData.highscore || 0,
-    streak: oldData.streak || 0
+    streak: oldData.streak || 0,
+    lastActiveDate: oldData.lastActiveDate || null
 };
 
 function saveData() {
@@ -101,20 +103,26 @@ function updateDashboard() {
 
     $("overall-accuracy").textContent = `${averageAccuracy}%`;
 
-    const level = Math.floor(userData.xp / 100) + 1;
+    const level = getPassLevel(userData.xp);
+
     $("profile-level").textContent =
-        `Level ${level} · ${getLevelName(level)}`;
+        level === 0
+            ? "Season Pass · Level 0"
+            : `Season Pass · Level ${level}`;
+
+    const profileTitle = document.querySelector(".profile-card strong");
+
+    if (profileTitle) {
+        profileTitle.textContent = userData.streak >= 10
+            ? "Dedicated"
+            : userData.streak >= 3
+                ? "Starting out!"
+                : "ZUNO Learner";
+    }
 
     $("game-highscore").textContent = userData.highscore;
 
     renderKeyMastery();
-}
-
-function getLevelName(level) {
-    if (level >= 10) return "Profi";
-    if (level >= 5) return "Fortgeschritten";
-    if (level >= 2) return "Geübt";
-    return "Anfänger";
 }
 
 // ------------------------------------
@@ -262,8 +270,6 @@ function startLesson(lessonId) {
 // ------------------------------------
 
 function continueLearning() {
-    // Repair older saved progress where the final exercise
-    // was completed but the lesson was not marked completed.
     lessons.forEach(lesson => {
         const progress = Number(userData.lessonProgress[lesson.id]) || 0;
 
@@ -365,7 +371,6 @@ function renderTypingText(typedText) {
 typingInput.addEventListener("keydown", event => {
     if (finished) return;
 
-    // No deleting or replacing previously typed characters.
     if (
         event.key === "Backspace" ||
         event.key === "Delete" ||
@@ -375,12 +380,10 @@ typingInput.addEventListener("keydown", event => {
         return;
     }
 
-    // No selecting and replacing text.
     if (typingInput.selectionStart !== typingInput.selectionEnd) {
         event.preventDefault();
     }
 
-    // Block shortcuts that could paste or replace text.
     if (
         (event.ctrlKey || event.metaKey) &&
         ["v", "x", "a"].includes(event.key.toLowerCase())
@@ -433,7 +436,6 @@ function handleTyping() {
     const input = typingInput;
     let typedText = input.value;
 
-    // Reject deletion or editing of previous characters.
     if (
         typedText.length < previousInput.length ||
         !typedText.startsWith(previousInput)
@@ -457,7 +459,6 @@ function handleTyping() {
     let correctCharacters = 0;
     let errors = 0;
 
-    // Calculate accuracy for the whole input.
     for (let i = 0; i < typedText.length; i++) {
         if (typedText[i] === targetText[i]) {
             correctCharacters++;
@@ -466,7 +467,6 @@ function handleTyping() {
         }
     }
 
-    // Count only the newly entered character in key statistics.
     if (typedText.length > previousLength) {
         const newIndex = typedText.length - 1;
         const key = targetText[newIndex].toLowerCase();
@@ -515,6 +515,36 @@ function handleTyping() {
 }
 
 // ------------------------------------
+// DAILY STREAK
+// ------------------------------------
+
+function recordDailyStreak() {
+    const today = new Date();
+
+    const todayKey =
+        `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    if (userData.lastActiveDate === todayKey) return;
+
+    if (userData.lastActiveDate) {
+        const previous = new Date(`${userData.lastActiveDate}T00:00:00`);
+        const current = new Date(`${todayKey}T00:00:00`);
+
+        const daysBetween = Math.round(
+            (current - previous) / 86400000
+        );
+
+        userData.streak = daysBetween === 1
+            ? userData.streak + 1
+            : 1;
+    } else {
+        userData.streak = Math.max(1, userData.streak);
+    }
+
+    userData.lastActiveDate = todayKey;
+}
+
+// ------------------------------------
 // COMPLETE EXERCISE
 // ------------------------------------
 
@@ -522,6 +552,7 @@ function completeExercise() {
     if (finished) return;
 
     finished = true;
+    recordDailyStreak();
     typingInput.disabled = true;
 
     const isLastExercise =
@@ -552,7 +583,6 @@ function completeExercise() {
     if (trainingMode === "lesson") {
         userData.lessonProgress[currentLesson.id] = currentExercise + 1;
 
-        // Complete the lesson immediately after its final exercise.
         if (
             isLastExercise &&
             !userData.completedLessons.includes(currentLesson.id)
@@ -720,7 +750,6 @@ function startGame() {
     gameSpawnTimer = setInterval(spawnGameLetter, 1100);
 
     gameLoopTimer = setInterval(() => {
-        // Iterate backwards so removing an item does not skip the next one.
         for (let i = gameLetters.length - 1; i >= 0; i--) {
             const item = gameLetters[i];
 
@@ -800,6 +829,482 @@ document.addEventListener("keydown", event => {
 
     updateGameStats();
 });
+
+// ------------------------------------
+// ZUNO SEASON PASS
+// ------------------------------------
+
+const passStyle = document.createElement("style");
+
+passStyle.textContent = `
+.pass-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    overflow-y: auto;
+    padding: 28px 18px;
+    background: rgba(8, 7, 15, .88);
+    backdrop-filter: blur(12px);
+}
+
+.pass-overlay.visible {
+    display: block;
+}
+
+.pass-window {
+    width: min(1180px, 100%);
+    margin: 24px auto;
+    padding: 28px;
+    color: var(--text);
+    background: linear-gradient(145deg, #211d32, #151320 72%);
+    border: 1px solid #39324e;
+    border-radius: 20px;
+    box-shadow: 0 25px 90px rgba(0,0,0,.5);
+}
+
+.pass-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.pass-kicker {
+    color: #a997ff;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.pass-top h2 {
+    font-size: clamp(25px, 4vw, 36px);
+    margin: 7px 0;
+}
+
+.pass-top p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.pass-close {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    color: white;
+    background: #302b43;
+    border-radius: 10px;
+    font-size: 21px;
+}
+
+.pass-progress-panel {
+    padding: 18px 20px;
+    margin-bottom: 26px;
+    background: linear-gradient(100deg, #453777, #29233e);
+    border: 1px solid #6754a8;
+    border-radius: 14px;
+}
+
+.pass-progress-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+}
+
+.pass-progress-head strong {
+    font-size: 14px;
+}
+
+.pass-progress-head span {
+    color: #d1c9f0;
+}
+
+.pass-progress-track {
+    height: 9px;
+    overflow: hidden;
+    background: rgba(0,0,0,.3);
+    border-radius: 20px;
+}
+
+.pass-progress-fill {
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #9d8aff, #d6caff);
+    border-radius: inherit;
+    transition: width .3s ease;
+}
+
+.pass-next-info {
+    margin-top: 10px;
+    color: #ded7f5;
+    font-size: 11px;
+}
+
+.pass-rail-scroll {
+    overflow-x: auto;
+    padding: 18px 4px 28px;
+    scrollbar-color: #6956ad #211d32;
+}
+
+.pass-rail {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(10, 154px);
+    gap: 10px;
+    min-width: max-content;
+    padding: 0 8px;
+}
+
+.pass-rail::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 34px;
+    right: 34px;
+    height: 7px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, #7760d7, #4c426d);
+    border: 1px solid #8c79ed;
+    border-radius: 20px;
+    box-shadow: 0 0 18px rgba(139,117,255,.3);
+}
+
+.pass-stop {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-height: 330px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.pass-stop:nth-child(even) {
+    flex-direction: column-reverse;
+}
+
+.pass-reward-card {
+    width: 145px;
+    min-height: 124px;
+    padding: 12px 9px;
+    background: #242033;
+    border: 1px solid #48415f;
+    border-radius: 12px;
+    transition: .2s ease;
+}
+
+.pass-reward-card.unlocked {
+    background: linear-gradient(145deg, #37305a, #242033);
+    border-color: #a18cff;
+    box-shadow: 0 0 18px rgba(139,117,255,.17);
+}
+
+.pass-reward-card.current {
+    border-color: #e2c77b;
+    box-shadow: 0 0 18px rgba(226,199,123,.22);
+}
+
+.pass-reward-icon {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 25px;
+}
+
+.pass-reward-card h3 {
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.pass-reward-card p {
+    min-height: 28px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.pass-reward-status {
+    display: block;
+    margin-top: 8px;
+    color: #bdb3e9;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.pass-reward-card.unlocked .pass-reward-status {
+    color: #a8ffb1;
+}
+
+.pass-node {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    place-items: center;
+    color: #c9c0e9;
+    background: #302a45;
+    border: 3px solid #7160b5;
+    border-radius: 50%;
+    box-shadow: 0 0 0 5px #1c1929;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.pass-stop.unlocked .pass-node {
+    color: #171322;
+    background: #c4b5ff;
+    border-color: #e1d9ff;
+}
+
+.pass-stop.current .pass-node {
+    background: #f1d78f;
+    border-color: #fff0c2;
+    color: #211a2d;
+    box-shadow: 0 0 0 5px #1c1929, 0 0 20px rgba(241,215,143,.55);
+}
+
+.pass-xp-label {
+    position: absolute;
+    top: calc(50% + 31px);
+    width: 100%;
+    color: #d4c9ff;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.pass-stop:nth-child(even) .pass-xp-label {
+    top: auto;
+    bottom: calc(50% + 31px);
+}
+
+.pass-footer-note {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+}
+
+.profile-card {
+    cursor: pointer;
+}
+
+.profile-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 5px;
+    border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+    .pass-window {
+        padding: 20px 14px;
+        margin: 5px auto;
+    }
+
+    .pass-top h2 {
+        font-size: 25px;
+    }
+
+    .pass-progress-head {
+        flex-direction: column;
+    }
+}
+`;
+
+document.head.appendChild(passStyle);
+
+const passOverlay = document.createElement("div");
+passOverlay.className = "pass-overlay";
+passOverlay.id = "zuno-pass-overlay";
+
+passOverlay.innerHTML = `
+    <section class="pass-window" role="dialog" aria-modal="true" aria-labelledby="pass-title">
+
+        <div class="pass-top">
+            <div>
+                <span class="pass-kicker">ZUNOkeys · SEASON 1</span>
+                <h2 id="pass-title">Season Pass</h2>
+                <p>Sammle XP und schalte Belohnungen entlang des Fortschritts-Strahls frei.</p>
+            </div>
+
+            <button class="pass-close" id="pass-close" aria-label="Pass schließen">
+                ×
+            </button>
+        </div>
+
+        <div class="pass-progress-panel">
+            <div class="pass-progress-head">
+                <strong id="pass-current-level">Level 0</strong>
+                <span id="pass-xp-text">0 XP insgesamt</span>
+            </div>
+
+            <div class="pass-progress-track">
+                <div class="pass-progress-fill" id="pass-progress-fill"></div>
+            </div>
+
+            <p class="pass-next-info" id="pass-next-info"></p>
+        </div>
+
+        <div class="pass-rail-scroll">
+            <div class="pass-rail" id="pass-rail"></div>
+        </div>
+
+        <p class="pass-footer-note">
+            Jede Belohnung bleibt dauerhaft freigeschaltet. XP werden nicht ausgegeben.
+        </p>
+
+    </section>
+`;
+
+document.body.appendChild(passOverlay);
+
+const passRewardIcons = {
+    badge: "🏅",
+    keyboard: "⌨️",
+    title: "✦",
+    "pass-background": "🎨",
+    "profile-frame": "🖼️",
+    "profile-accent": "✨"
+};
+
+// ------------------------------------
+// RENDER SEASON PASS
+// ------------------------------------
+
+function renderSeasonPass() {
+    const nextReward = PASS_REWARDS.find(
+        reward => userData.xp < reward.xp
+    );
+
+    const currentLevel = getPassLevel(userData.xp);
+
+    const currentThreshold = currentLevel === 0
+        ? 0
+        : PASS_REWARDS[currentLevel - 1].xp;
+
+    const targetXP = nextReward ? nextReward.xp : 10000;
+
+    const progressPercent = nextReward
+        ? Math.max(
+            0,
+            Math.min(
+                100,
+                ((userData.xp - currentThreshold) /
+                    (targetXP - currentThreshold)) * 100
+            )
+        )
+        : 100;
+
+    $("pass-current-level").textContent = currentLevel >= 10
+        ? "Level 10 · ZUNO Legend"
+        : `Level ${currentLevel} erreicht`;
+
+    $("pass-xp-text").textContent =
+        `${userData.xp.toLocaleString("de-DE")} XP insgesamt`;
+
+    $("pass-progress-fill").style.width =
+        `${progressPercent}%`;
+
+    $("pass-next-info").textContent = nextReward
+        ? `Noch ${(nextReward.xp - userData.xp).toLocaleString("de-DE")} XP bis Level ${nextReward.level} · Belohnung: ${nextReward.reward}`
+        : "🏆 Season Pass abgeschlossen! Alle Belohnungen freigeschaltet.";
+
+    const rail = $("pass-rail");
+    rail.replaceChildren();
+
+    PASS_REWARDS.forEach(reward => {
+        const unlocked = userData.xp >= reward.xp;
+        const isNext = !unlocked && nextReward &&
+            reward.level === nextReward.level;
+
+        const stop = document.createElement("div");
+
+        stop.className =
+            `pass-stop${unlocked ? " unlocked" : ""}${isNext ? " current" : ""}`;
+
+        const card = document.createElement("div");
+
+        card.className =
+            `pass-reward-card${unlocked ? " unlocked" : ""}${isNext ? " current" : ""}`;
+
+        const icon = document.createElement("span");
+        icon.className = "pass-reward-icon";
+        icon.textContent = passRewardIcons[reward.type] || "🎁";
+
+        const title = document.createElement("h3");
+        title.textContent = `LEVEL ${reward.level} · ${reward.name}`;
+
+        const description = document.createElement("p");
+        description.textContent = reward.reward;
+
+        const status = document.createElement("span");
+        status.className = "pass-reward-status";
+
+        status.textContent = unlocked
+            ? "✓ FREIGESCHALTET"
+            : `${(reward.xp - userData.xp).toLocaleString("de-DE")} XP FEHLEN`;
+
+        card.append(icon, title, description, status);
+
+        const node = document.createElement("div");
+        node.className = "pass-node";
+        node.textContent = unlocked ? "✓" : reward.level;
+
+        const xpLabel = document.createElement("span");
+        xpLabel.className = "pass-xp-label";
+        xpLabel.textContent =
+            `${reward.xp.toLocaleString("de-DE")} XP`;
+
+        stop.append(card, node, xpLabel);
+        rail.appendChild(stop);
+    });
+}
+
+// ------------------------------------
+// OPEN / CLOSE PASS
+// ------------------------------------
+
+function openSeasonPass() {
+    renderSeasonPass();
+    passOverlay.classList.add("visible");
+}
+
+function closeSeasonPass() {
+    passOverlay.classList.remove("visible");
+}
+
+$("pass-close").addEventListener("click", closeSeasonPass);
+
+passOverlay.addEventListener("click", event => {
+    if (event.target === passOverlay) {
+        closeSeasonPass();
+    }
+});
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+        closeSeasonPass();
+    }
+});
+
+const profileCard = document.querySelector(".profile-card");
+
+if (profileCard) {
+    profileCard.setAttribute("tabindex", "0");
+    profileCard.setAttribute("role", "button");
+    profileCard.setAttribute("aria-label", "ZUNO Season Pass öffnen");
+
+    profileCard.addEventListener("click", openSeasonPass);
+
+    profileCard.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openSeasonPass();
+        }
+    });
+}
 
 // ------------------------------------
 // INITIALIZATION
