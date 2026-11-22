@@ -935,3 +935,180 @@ button {
         flex-direction: column;
     }
 }
+/* ------------------------------------
+   ZUNO COSMETICS
+------------------------------------ */
+
+/* Profil-Abzeichen */
+
+.cosmetic-badge-blue {
+    background: linear-gradient(135deg, #327bff, #75c4ff) !important;
+    color: white;
+    box-shadow: 0 0 15px rgba(75, 155, 255, .45);
+}
+
+.cosmetic-badge-speed {
+    background: linear-gradient(135deg, #ff713d, #ffca65) !important;
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 130, 60, .4);
+}
+
+.cosmetic-badge-legend {
+    background: linear-gradient(135deg, #e7b94e, #fff0a8) !important;
+    color: #39250a;
+    box-shadow: 0 0 18px rgba(255, 210, 90, .6);
+}
+
+/* Profilrahmen */
+
+.cosmetic-frame-elite {
+    outline: 3px solid #d5b6ff;
+    outline-offset: 3px;
+    box-shadow: 0 0 16px rgba(180, 130, 255, .6);
+}
+
+/* Profil-Akzent */
+
+.cosmetic-profile-accent {
+    animation: zuno-profile-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes zuno-profile-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 rgba(139, 117, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 18px rgba(139, 117, 255, .4);
+    }
+}
+
+/* Ausgerüstete Titel */
+
+#profile-cosmetic-title {
+    color: #bbaaff;
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+/* Tastatur-Designs */
+
+#typing-input.cosmetic-keyboard-purple {
+    border-color: #a997ff;
+    box-shadow: 0 0 15px rgba(139, 117, 255, .2);
+    background: linear-gradient(135deg, #211b35, #14121d);
+}
+
+#typing-input.cosmetic-keyboard-gold {
+    border-color: #e8c45d;
+    box-shadow: 0 0 17px rgba(232, 196, 93, .25);
+    background: linear-gradient(135deg, #302719, #14121d);
+}
+
+/* Season-Pass-Hintergrund */
+
+.pass-window.cosmetic-pass-background {
+    background:
+        radial-gradient(ellipse at top right, rgba(139, 117, 255, .25), transparent 55%),
+        linear-gradient(145deg, #30264b, #151320 72%);
+    border-color: #8972d9;
+}
+
+/* SPIND */
+
+.wardrobe-section {
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid #39324e;
+}
+
+.wardrobe-heading {
+    margin-bottom: 18px;
+}
+
+.wardrobe-heading h2 {
+    font-size: 22px;
+    margin: 7px 0;
+}
+
+.wardrobe-heading p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.wardrobe-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 11px;
+}
+
+.wardrobe-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 13px;
+    background: #242033;
+    border: 1px solid #48415f;
+    border-radius: 12px;
+    transition: .2s ease;
+}
+
+.wardrobe-item.equipped {
+    border-color: #a997ff;
+    background: linear-gradient(120deg, #37305a, #242033);
+}
+
+.wardrobe-item-info {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.wardrobe-item-icon {
+    font-size: 23px;
+}
+
+.wardrobe-item-info strong,
+.wardrobe-item-info span {
+    display: block;
+}
+
+.wardrobe-item-info strong {
+    font-size: 11px;
+}
+
+.wardrobe-item-info div span {
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 5px;
+}
+
+.wardrobe-button {
+    flex: 0 0 auto;
+    padding: 9px 11px;
+    color: white;
+    background: #6651bd;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.wardrobe-button:hover {
+    background: #806be0;
+}
+
+.wardrobe-button.unequip {
+    color: #d7d0e8;
+    background: #393449;
+}
+
+.wardrobe-empty {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 15px;
+    background: #242033;
+    border-radius: 10px;
+}
