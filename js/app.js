@@ -3,6 +3,7 @@ import { lessons, getLesson } from "./lessons.js";
 import { PASS_REWARDS, getPassLevel } from "./pass.js";
 
 const $ = id => document.getElementById(id);
+const STORAGE_KEY = "zunokeys-data";
 
 const views = {
     dashboard: $("dashboard-view"),
@@ -10,8 +11,6 @@ const views = {
     practice: $("practice-view"),
     game: $("game-view")
 };
-
-const STORAGE_KEY = "zunokeys-data";
 
 // ------------------------------------
 // USER DATA
@@ -37,7 +36,12 @@ const userData = {
     keyStats: oldData.keyStats || {},
     highscore: oldData.highscore || 0,
     streak: oldData.streak || 0,
-    lastActiveDate: oldData.lastActiveDate || null
+    lastActiveDate: oldData.lastActiveDate || null,
+    equippedCosmetics:
+        oldData.equippedCosmetics &&
+        typeof oldData.equippedCosmetics === "object"
+            ? oldData.equippedCosmetics
+            : {}
 };
 
 function saveData() {
@@ -87,6 +91,165 @@ document.querySelectorAll("[data-go]").forEach(button => {
 });
 
 // ------------------------------------
+// COSMETICS
+// ------------------------------------
+
+const cosmeticNames = {
+    "blue-badge": "Blaues Profil-Abzeichen",
+    "keyboard-2": "Neues Tastatur-Design",
+    "rookie": "Titel: Rookie",
+    "speed-demon": "Speed-Demon-Abzeichen",
+    "pass-background-2": "Besonderer Pass-Hintergrund",
+    "night-owl": "Titel: Night Owl",
+    "gold-keyboard": "Goldenes Tastatur-Design",
+    "elite-frame": "Exklusiver Profilrahmen",
+    "animated-accent": "Animierter Profil-Akzent",
+    "zuno-legend": "Legendäres ZUNO-Abzeichen"
+};
+
+const cosmeticSlots = {
+    badge: "Profil-Abzeichen",
+    keyboard: "Tastatur-Design",
+    title: "Titel",
+    "pass-background": "Pass-Hintergrund",
+    "profile-frame": "Profilrahmen",
+    "profile-accent": "Profil-Akzent"
+};
+
+const cosmeticIcons = {
+    "blue-badge": "★",
+    "keyboard-2": "⌨️",
+    "rookie": "✦",
+    "speed-demon": "⚡",
+    "pass-background-2": "🎨",
+    "night-owl": "🌙",
+    "gold-keyboard": "⌨️",
+    "elite-frame": "🖼️",
+    "animated-accent": "✨",
+    "zuno-legend": "👑"
+};
+
+function getEquippedCosmetic(slot) {
+    return userData.equippedCosmetics[slot] || null;
+}
+
+function isCosmeticUnlocked(id) {
+    const reward = PASS_REWARDS.find(item => item.id === id);
+    return Boolean(reward && userData.xp >= reward.xp);
+}
+
+function equipCosmetic(id) {
+    const reward = PASS_REWARDS.find(item => item.id === id);
+
+    if (!reward || !isCosmeticUnlocked(id)) return;
+
+    const slot = reward.type;
+
+    // Nochmal klicken = Cosmetic ablegen
+    if (getEquippedCosmetic(slot) === id) {
+        delete userData.equippedCosmetics[slot];
+    } else {
+        // Pro Kategorie kann nur ein Cosmetic aktiv sein
+        userData.equippedCosmetics[slot] = id;
+    }
+
+    saveData();
+    applyCosmetics();
+    renderWardrobe();
+}
+
+function applyCosmetics() {
+    const avatar = $("profile-avatar");
+    const badge = $("profile-badge");
+    const titleElement = $("profile-cosmetic-title");
+    const profileCard = document.querySelector(".profile-card");
+
+    const equippedBadge = getEquippedCosmetic("badge");
+    const equippedFrame = getEquippedCosmetic("profile-frame");
+    const equippedAccent = getEquippedCosmetic("profile-accent");
+    const equippedTitle = getEquippedCosmetic("title");
+    const equippedKeyboard = getEquippedCosmetic("keyboard");
+
+    // Profil-Abzeichen
+    if (avatar && badge) {
+        badge.textContent =
+            equippedBadge === "zuno-legend" ? "👑" :
+            equippedBadge === "speed-demon" ? "⚡" :
+            equippedBadge === "blue-badge" ? "★" : "Z";
+
+        avatar.classList.remove(
+            "cosmetic-badge-blue",
+            "cosmetic-badge-speed",
+            "cosmetic-badge-legend",
+            "cosmetic-frame-elite"
+        );
+
+        if (equippedBadge === "blue-badge") {
+            avatar.classList.add("cosmetic-badge-blue");
+        }
+
+        if (equippedBadge === "speed-demon") {
+            avatar.classList.add("cosmetic-badge-speed");
+        }
+
+        if (equippedBadge === "zuno-legend") {
+            avatar.classList.add("cosmetic-badge-legend");
+        }
+
+        if (equippedFrame === "elite-frame") {
+            avatar.classList.add("cosmetic-frame-elite");
+        }
+    }
+
+    // Profil-Titel
+    if (titleElement) {
+        const titles = {
+            rookie: "Rookie",
+            "night-owl": "Night Owl"
+        };
+
+        titleElement.textContent = titles[equippedTitle] || "";
+        titleElement.style.display = equippedTitle ? "block" : "none";
+    }
+
+    // Profil-Akzent
+    if (profileCard) {
+        profileCard.classList.toggle(
+            "cosmetic-profile-accent",
+            equippedAccent === "animated-accent"
+        );
+    }
+
+    // Tastatur-Design
+    const typingInput = $("typing-input");
+
+    if (typingInput) {
+        typingInput.classList.remove(
+            "cosmetic-keyboard-purple",
+            "cosmetic-keyboard-gold"
+        );
+
+        if (equippedKeyboard === "keyboard-2") {
+            typingInput.classList.add("cosmetic-keyboard-purple");
+        }
+
+        if (equippedKeyboard === "gold-keyboard") {
+            typingInput.classList.add("cosmetic-keyboard-gold");
+        }
+    }
+
+    // Season-Pass-Hintergrund
+    const passWindow = document.querySelector(".pass-window");
+
+    if (passWindow) {
+        passWindow.classList.toggle(
+            "cosmetic-pass-background",
+            getEquippedCosmetic("pass-background") === "pass-background-2"
+        );
+    }
+}
+
+// ------------------------------------
 // DASHBOARD
 // ------------------------------------
 
@@ -123,6 +286,7 @@ function updateDashboard() {
     $("game-highscore").textContent = userData.highscore;
 
     renderKeyMastery();
+    applyCosmetics();
 }
 
 // ------------------------------------
@@ -321,9 +485,7 @@ function loadExercise() {
         `Übung ${currentExercise + 1} / ${currentLesson.exercises.length}`;
 
     $("exercise-progress-label").textContent =
-        `${Math.round(
-            currentExercise / currentLesson.exercises.length * 100
-        )}%`;
+        `${Math.round(currentExercise / currentLesson.exercises.length * 100)}%`;
 
     $("live-wpm").textContent = "0 WPM";
     $("live-accuracy").textContent = "100%";
@@ -398,7 +560,6 @@ typingInput.addEventListener("drop", event => event.preventDefault());
 
 typingInput.addEventListener("input", handleTyping);
 
-
 // ------------------------------------
 // GLOBAL SPACEBAR
 // ------------------------------------
@@ -418,7 +579,6 @@ document.addEventListener("keydown", event => {
         return;
     }
 
-    // Verhindert, dass die Leertaste ins neue Eingabefeld gelangt.
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
@@ -429,7 +589,6 @@ document.addEventListener("keydown", event => {
         nextExercise();
     }
 }, true);
-
 
 // ------------------------------------
 // HANDLE TYPING
@@ -866,6 +1025,11 @@ passStyle.textContent = `
     border: 1px solid #39324e;
     border-radius: 20px;
     box-shadow: 0 25px 90px rgba(0,0,0,.5);
+    transition: background .25s ease;
+}
+
+.pass-window.cosmetic-pass-background {
+    background: linear-gradient(145deg, #30284e, #19152c 72%);
 }
 
 .pass-top {
@@ -1085,12 +1249,108 @@ passStyle.textContent = `
     bottom: calc(50% + 31px);
 }
 
+/* WARDROBE */
+
+.wardrobe-section {
+    margin-top: 22px;
+    padding: 22px;
+    background: rgba(255,255,255,.025);
+    border: 1px solid #39324e;
+    border-radius: 15px;
+}
+
+.wardrobe-heading {
+    margin-bottom: 18px;
+}
+
+.wardrobe-heading h2 {
+    margin: 7px 0;
+    font-size: 21px;
+}
+
+.wardrobe-heading p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.wardrobe-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+}
+
+.wardrobe-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 13px;
+    background: #242033;
+    border: 1px solid #48415f;
+    border-radius: 11px;
+}
+
+.wardrobe-item.equipped {
+    border-color: #9b87ff;
+    background: #30294a;
+}
+
+.wardrobe-item-info {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.wardrobe-item-icon {
+    font-size: 23px;
+}
+
+.wardrobe-item-info strong,
+.wardrobe-item-info span {
+    display: block;
+}
+
+.wardrobe-item-info strong {
+    font-size: 11px;
+}
+
+.wardrobe-item-info div span {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.wardrobe-button {
+    flex-shrink: 0;
+    padding: 8px 11px;
+    color: white;
+    background: #6653b3;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.wardrobe-button.unequip {
+    color: #d5d0e4;
+    background: #403b50;
+}
+
+.wardrobe-empty {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 12px 0;
+}
+
 .pass-footer-note {
-    margin-top: 12px;
+    margin-top: 18px;
     color: var(--muted);
     font-size: 10px;
     text-align: center;
 }
+
+/* PROFILE COSMETICS */
 
 .profile-card {
     cursor: pointer;
@@ -1100,6 +1360,53 @@ passStyle.textContent = `
     outline: 2px solid var(--primary);
     outline-offset: 5px;
     border-radius: 8px;
+}
+
+.profile-avatar {
+    transition: .2s ease;
+}
+
+.cosmetic-badge-blue {
+    background: linear-gradient(145deg, #5ba8ff, #3157bd) !important;
+    box-shadow: 0 0 12px rgba(91,168,255,.45);
+}
+
+.cosmetic-badge-speed {
+    background: linear-gradient(145deg, #ffbd55, #e66a28) !important;
+    box-shadow: 0 0 12px rgba(255,160,55,.45);
+}
+
+.cosmetic-badge-legend {
+    background: linear-gradient(145deg, #ffe58b, #c58c32) !important;
+    box-shadow: 0 0 15px rgba(255,220,100,.6);
+}
+
+.cosmetic-frame-elite {
+    outline: 3px solid #c7a8ff;
+    outline-offset: 3px;
+}
+
+.cosmetic-profile-accent {
+    animation: profileGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes profileGlow {
+    from { box-shadow: 0 0 0 rgba(139,117,255,0); }
+    to { box-shadow: 0 0 16px rgba(139,117,255,.4); }
+}
+
+#profile-cosmetic-title {
+    color: #bbaaff;
+}
+
+#typing-input.cosmetic-keyboard-purple {
+    border-color: #a18cff;
+    box-shadow: 0 0 12px rgba(139,117,255,.2);
+}
+
+#typing-input.cosmetic-keyboard-gold {
+    border-color: #e8c56d;
+    box-shadow: 0 0 12px rgba(232,197,109,.2);
 }
 
 @media (max-width: 600px) {
@@ -1114,6 +1421,10 @@ passStyle.textContent = `
 
     .pass-progress-head {
         flex-direction: column;
+    }
+
+    .wardrobe-section {
+        padding: 15px;
     }
 }
 `;
@@ -1156,8 +1467,20 @@ passOverlay.innerHTML = `
             <div class="pass-rail" id="pass-rail"></div>
         </div>
 
+        <section class="wardrobe-section">
+            <div class="wardrobe-heading">
+                <div>
+                    <span class="pass-kicker">DEINE SAMMLUNG</span>
+                    <h2>🎒 Dein Spind</h2>
+                    <p>Rüste deine freigeschalteten Cosmetics aus.</p>
+                </div>
+            </div>
+
+            <div id="wardrobe-list" class="wardrobe-list"></div>
+        </section>
+
         <p class="pass-footer-note">
-            Jede Belohnung bleibt dauerhaft freigeschaltet. XP werden nicht ausgegeben.
+            Freigeschaltete Belohnungen gehören dir dauerhaft. Ausrüsten kostet keine XP.
         </p>
 
     </section>
@@ -1173,6 +1496,65 @@ const passRewardIcons = {
     "profile-frame": "🖼️",
     "profile-accent": "✨"
 };
+
+// ------------------------------------
+// RENDER WARDROBE
+// ------------------------------------
+
+function renderWardrobe() {
+    const container = $("wardrobe-list");
+
+    if (!container) return;
+
+    container.replaceChildren();
+
+    PASS_REWARDS.forEach(reward => {
+        if (!isCosmeticUnlocked(reward.id)) return;
+
+        const equipped = getEquippedCosmetic(reward.type) === reward.id;
+
+        const item = document.createElement("div");
+        item.className = `wardrobe-item${equipped ? " equipped" : ""}`;
+
+        const info = document.createElement("div");
+        info.className = "wardrobe-item-info";
+
+        const icon = document.createElement("span");
+        icon.className = "wardrobe-item-icon";
+        icon.textContent = cosmeticIcons[reward.id] || "🎁";
+
+        const text = document.createElement("div");
+
+        const name = document.createElement("strong");
+        name.textContent = cosmeticNames[reward.id] || reward.reward;
+
+        const category = document.createElement("span");
+        category.textContent = cosmeticSlots[reward.type] || reward.type;
+
+        text.append(name, category);
+        info.append(icon, text);
+
+        const button = document.createElement("button");
+        button.className = equipped
+            ? "wardrobe-button unequip"
+            : "wardrobe-button";
+
+        button.textContent = equipped ? "Ablegen" : "Ausrüsten";
+        button.dataset.cosmetic = reward.id;
+
+        item.append(info, button);
+        container.appendChild(item);
+    });
+
+    if (!container.children.length) {
+        const empty = document.createElement("p");
+        empty.className = "wardrobe-empty";
+        empty.textContent =
+            "Noch keine Cosmetics freigeschaltet. Sammle XP, um deine Sammlung zu erweitern!";
+
+        container.appendChild(empty);
+    }
+}
 
 // ------------------------------------
 // RENDER SEASON PASS
@@ -1265,7 +1647,22 @@ function renderSeasonPass() {
         stop.append(card, node, xpLabel);
         rail.appendChild(stop);
     });
+
+    renderWardrobe();
+    applyCosmetics();
 }
+
+// ------------------------------------
+// WARDROBE BUTTONS
+// ------------------------------------
+
+passOverlay.addEventListener("click", event => {
+    const button = event.target.closest("[data-cosmetic]");
+
+    if (!button) return;
+
+    equipCosmetic(button.dataset.cosmetic);
+});
 
 // ------------------------------------
 // OPEN / CLOSE PASS
