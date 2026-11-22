@@ -398,6 +398,7 @@ typingInput.addEventListener("drop", event => event.preventDefault());
 
 typingInput.addEventListener("input", handleTyping);
 
+
 // ------------------------------------
 // GLOBAL SPACEBAR
 // ------------------------------------
@@ -417,14 +418,18 @@ document.addEventListener("keydown", event => {
         return;
     }
 
+    // Verhindert, dass die Leertaste ins neue Eingabefeld gelangt.
     event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
 
     if ($("next-button").textContent === "Zum Dashboard →") {
         exitTraining();
     } else {
         nextExercise();
     }
-});
+}, true);
+
 
 // ------------------------------------
 // HANDLE TYPING
