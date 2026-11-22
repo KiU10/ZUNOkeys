@@ -1,15 +1,15 @@
 
 export const PASS_REWARDS = [
-    { level: 1, xp: 10, name: "First Step", reward: "Blaues Profil-Abzeichen", type: "badge", id: "blue-badge" },
-    { level: 2, xp: 20, name: "Keyboard Rookie", reward: "Neues Tastatur-Design", type: "keyboard", id: "keyboard-2" },
-    { level: 3, xp: 30, name: "Rookie", reward: "Exklusiver Titel", type: "title", id: "rookie" },
-    { level: 4, xp: 40, name: "Speed Demon", reward: "Speed-Demon-Abzeichen", type: "badge", id: "speed-demon" },
-    { level: 5, xp: 50, name: "Halfway There", reward: "Besonderer Pass-Hintergrund", type: "pass-background", id: "pass-background-2" },
-    { level: 6, xp: 60, name: "Night Owl", reward: "Exklusiver Titel", type: "title", id: "night-owl" },
-    { level: 7, xp: 70, name: "Key Master", reward: "Goldenes Tastatur-Design", type: "keyboard", id: "gold-keyboard" },
-    { level: 8, xp: 80, name: "Elite Typist", reward: "Exklusiver Profilrahmen", type: "profile-frame", id: "elite-frame" },
-    { level: 9, xp: 90, name: "Almost There", reward: "Animierter Profil-Akzent", type: "profile-accent", id: "animated-accent" },
-    { level: 10, xp: 100, name: "ZUNO Legend", reward: "Legendäres ZUNO-Abzeichen", type: "badge", id: "zuno-legend" }
+    { level: 1, xp: 1000, name: "First Step", reward: "Blaues Profil-Abzeichen", type: "badge", id: "blue-badge" },
+    { level: 2, xp: 2000, name: "Keyboard Rookie", reward: "Neues Tastatur-Design", type: "keyboard", id: "keyboard-2" },
+    { level: 3, xp: 3000, name: "Rookie", reward: "Exklusiver Titel", type: "title", id: "rookie" },
+    { level: 4, xp: 4000, name: "Speed Demon", reward: "Speed-Demon-Abzeichen", type: "badge", id: "speed-demon" },
+    { level: 5, xp: 5000, name: "Halfway There", reward: "Besonderer Pass-Hintergrund", type: "pass-background", id: "pass-background-2" },
+    { level: 6, xp: 6000, name: "Night Owl", reward: "Exklusiver Titel", type: "title", id: "night-owl" },
+    { level: 7, xp: 7000, name: "Key Master", reward: "Goldenes Tastatur-Design", type: "keyboard", id: "gold-keyboard" },
+    { level: 8, xp: 8000, name: "Elite Typist", reward: "Exklusiver Profilrahmen", type: "profile-frame", id: "elite-frame" },
+    { level: 9, xp: 9000, name: "Almost There", reward: "Animierter Profil-Akzent", type: "profile-accent", id: "animated-accent" },
+    { level: 10, xp: 10000, name: "ZUNO Legend", reward: "Legendäres ZUNO-Abzeichen", type: "badge", id: "zuno-legend" }
 ];
 
 export function getPassLevel(xp) {
