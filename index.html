@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -46,9 +47,12 @@
 
         <div class="sidebar-bottom">
             <div class="profile-card">
-                <div class="profile-avatar">Z</div>
-                <div>
+                <div class="profile-avatar" id="profile-avatar">
+                    <span id="profile-badge">Z</span>
+                </div>
+                <div class="profile-info">
                     <strong>ZUNO Learner</strong>
+                    <span id="profile-cosmetic-title"></span>
                     <span id="profile-level">Level 1 · Anfänger</span>
                 </div>
             </div>
@@ -144,9 +148,9 @@
 
             <div class="mastery-card">
                 <div class="keyboard-legend">
-                    <span><i class="legend-dot mastered"></i Sicher</span>
-                    <span><i class="legend-dot learning"></i In Arbeit</span>
-                    <span><i class="legend-dot unknown"></i Noch nicht trainiert</span>
+                    <span><i class="legend-dot mastered"></i> Sicher</span>
+                    <span><i class="legend-dot learning"></i> In Arbeit</span>
+                    <span><i class="legend-dot unknown"></i> Noch nicht trainiert</span>
                 </div>
                 <div id="key-mastery" class="key-mastery">
                     <!-- Wird von app.js erzeugt -->
