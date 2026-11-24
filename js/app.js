@@ -850,7 +850,7 @@ $("start-practice-button").addEventListener("click", () => {
     loadExercise();
 });
 
-◊
+
 // ------------------------------------
 // ZUNO SEASON PASS
 // ------------------------------------
