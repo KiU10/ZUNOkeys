@@ -1112,3 +1112,286 @@ button {
     background: #242033;
     border-radius: 10px;
 }
+
+/* ====================================
+   LETTER RUSH 2.0
+==================================== */
+
+.game-arena {
+    isolation: isolate;
+    background:
+        radial-gradient(ellipse at 50% 100%, rgba(111, 80, 220, .16), transparent 65%),
+        linear-gradient(rgba(139, 117, 255, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 117, 255, .045) 1px, transparent 1px),
+        #100e19;
+    background-size: auto, 35px 35px, 35px 35px, auto;
+    transition: background .3s ease;
+}
+
+.game-arena::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #8b75ff, transparent);
+    box-shadow: 0 0 18px #8b75ff;
+    opacity: .7;
+    pointer-events: none;
+}
+
+.game-extra-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: -5px 0 18px;
+}
+
+.game-extra-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(110deg, #27213b, #1b1927);
+    border: 1px solid #39324e;
+    border-radius: 10px;
+}
+
+.game-extra-stat span {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.game-extra-stat strong {
+    color: #c5b7ff;
+    font-size: 19px;
+}
+
+/* Falling letters */
+
+.game-letter {
+    z-index: 2;
+    width: 42px;
+    height: 42px;
+    color: white;
+    background: linear-gradient(145deg, #8069e8, #49358f);
+    border: 1px solid #b5a4ff;
+    border-radius: 11px;
+    font-size: 18px;
+    box-shadow:
+        0 5px 15px rgba(0, 0, 0, .25),
+        0 0 17px rgba(139, 117, 255, .3);
+    animation: letterAppear .2s ease-out;
+    transition: box-shadow .2s ease;
+}
+
+@keyframes letterAppear {
+    from {
+        opacity: 0;
+        scale: .5;
+    }
+    to {
+        opacity: 1;
+        scale: 1;
+    }
+}
+
+/* Golden letters */
+
+.game-letter-golden {
+    color: #fff8d9;
+    background: linear-gradient(145deg, #ffd978, #bd7924);
+    border: 1px solid #fff0a8;
+    box-shadow:
+        0 0 12px rgba(255, 207, 91, .7),
+        0 0 30px rgba(255, 174, 54, .3);
+    animation: goldenPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes goldenPulse {
+    from {
+        box-shadow: 0 0 10px rgba(255, 207, 91, .5);
+    }
+    to {
+        box-shadow: 0 0 25px rgba(255, 207, 91, .9);
+    }
+}
+
+/* Hit effects */
+
+.game-score-popup {
+    position: absolute;
+    z-index: 8;
+    color: #aaffbd;
+    font-size: 19px;
+    font-weight: 900;
+    pointer-events: none;
+    text-shadow: 0 0 12px rgba(57, 255, 100, .6);
+    animation: scoreFloat .8s ease-out forwards;
+}
+
+@keyframes scoreFloat {
+    from {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -45px) scale(1.35);
+    }
+}
+
+.game-hit-particle {
+    position: absolute;
+    z-index: 7;
+    width: 6px;
+    height: 6px;
+    background: #a997ff;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particleBurst .5s ease-out forwards;
+}
+
+.game-hit-particle.gold {
+    background: #ffdb76;
+    box-shadow: 0 0 8px #ffdb76;
+}
+
+@keyframes particleBurst {
+    from {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(0);
+    }
+}
+
+.game-hit-flash {
+    animation: hitFlash .18s ease-out;
+}
+
+@keyframes hitFlash {
+    50% {
+        box-shadow: inset 0 0 45px rgba(139, 117, 255, .25);
+    }
+}
+
+.game-miss-shake {
+    animation: missShake .25s ease;
+}
+
+@keyframes missShake {
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+}
+
+/* Floating announcements */
+
+.game-floating-message {
+    position: absolute;
+    z-index: 9;
+    top: 42%;
+    left: 50%;
+    width: max-content;
+    max-width: 90%;
+    color: white;
+    font-size: clamp(16px, 3vw, 24px);
+    font-weight: 950;
+    letter-spacing: 2px;
+    text-align: center;
+    pointer-events: none;
+    text-shadow: 0 0 18px rgba(139, 117, 255, .9);
+    animation: announcement .95s ease-out forwards;
+}
+
+.combo-message {
+    color: #bcaaff;
+}
+
+.gold-message {
+    color: #ffdc83;
+    text-shadow: 0 0 20px rgba(255, 190, 70, .8);
+}
+
+.fever-message {
+    color: #ff9cce;
+    text-shadow: 0 0 20px rgba(255, 100, 190, .8);
+}
+
+.level-message {
+    color: #9fffd2;
+}
+
+@keyframes announcement {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 15px) scale(.8);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1.08);
+    }
+    75% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -35px) scale(1);
+    }
+}
+
+/* Fever mode */
+
+.game-arena.game-fever {
+    border-color: #d96bb4;
+    background:
+        radial-gradient(ellipse at 50% 50%, rgba(220, 75, 180, .2), transparent 70%),
+        linear-gradient(rgba(255, 100, 190, .06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 100, 190, .06) 1px, transparent 1px),
+        #170e20;
+    background-size: auto, 35px 35px, 35px 35px, auto;
+    box-shadow: inset 0 0 35px rgba(255, 80, 190, .15);
+}
+
+.game-arena.game-fever::after {
+    background: linear-gradient(90deg, transparent, #ff80c8, transparent);
+    box-shadow: 0 0 20px #ff80c8;
+}
+
+.game-arena.game-fever .game-letter:not(.game-letter-golden) {
+    background: linear-gradient(145deg, #e77bc5, #863caa);
+    border-color: #ffb2e6;
+    box-shadow: 0 0 17px rgba(255, 100, 200, .4);
+}
+
+@media (max-width: 430px) {
+    .game-extra-stats {
+        gap: 7px;
+    }
+
+    .game-extra-stat {
+        padding: 10px;
+    }
+
+    .game-extra-stat strong {
+        font-size: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-letter,
+    .game-letter-golden,
+    .game-score-popup,
+    .game-hit-particle,
+    .game-floating-message,
+    .game-miss-shake,
+    .game-hit-flash {
+        animation: none !important;
+    }
+}
